@@ -7,514 +7,198 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Space+Mono:wght@400;700&family=Noto+Serif+JP:wght@200;400&display=swap" rel="stylesheet">
   <style>
-    /* =============================================
-       CONFIG — edit these to customise the site
-       ============================================= */
     :root {
-      --brand-name: "INKBOUND";          /* ← Change company/brand name here */
-      --password-enabled: 1;             /* ← Set to 0 to disable password gate */
-      --password: "manga2026";           /* ← Change password here            */
-
-      --black:   #0a0a0a;
-      --dark:    #111111;
-      --panel:   #161616;
-      --border:  #1f2a1f;
-      --green:   #1a5c2a;
-      --green2:  #226b34;
-      --accent:  #2dbe54;
-      --glow:    #2dbe5440;
-      --text:    #c8d4c8;
-      --muted:   #5a7a5a;
-      --white:   #e8ede8;
+      --black:#0a0a0a;--dark:#111111;--panel:#161616;--border:#1f2a1f;
+      --green:#1a5c2a;--green2:#226b34;--accent:#2dbe54;--glow:#2dbe5440;
+      --text:#c8d4c8;--muted:#5a7a5a;--white:#e8ede8;
     }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--black);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none}
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideInLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes glow-pulse{0%,100%{box-shadow:0 0 10px var(--glow)}50%{box-shadow:0 0 30px var(--glow),0 0 60px var(--glow)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    @keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+    @keyframes borderGlow{0%,100%{border-color:var(--border)}50%{border-color:var(--accent)}}
+    @keyframes countUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
-    html { scroll-behavior: smooth; }
+    .animate-fade-up{animation:fadeUp 0.7s ease forwards}
+    .animate-fade-in{animation:fadeIn 0.6s ease forwards}
+    .animate-slide-left{animation:slideInLeft 0.7s ease forwards}
+    .animate-slide-right{animation:slideInRight 0.7s ease forwards}
 
-    body {
-      background: var(--black);
-      color: var(--text);
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+    /* stagger delays */
+    .delay-1{animation-delay:0.1s;opacity:0}
+    .delay-2{animation-delay:0.2s;opacity:0}
+    .delay-3{animation-delay:0.35s;opacity:0}
+    .delay-4{animation-delay:0.5s;opacity:0}
+    .delay-5{animation-delay:0.65s;opacity:0}
 
-    /* ── NOISE OVERLAY ── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-    }
+    /* scroll reveal */
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+    .reveal-left{opacity:0;transform:translateX(-24px);transition:opacity 0.7s ease,transform 0.7s ease}
+    .reveal-left.visible{opacity:1;transform:translateX(0)}
 
-    /* ============================================================
-       PASSWORD GATE
-       ============================================================ */
-    #gate {
-      position: fixed; inset: 0; z-index: 1000;
-      background: var(--black);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 32px;
-      transition: opacity 0.6s ease, visibility 0.6s ease;
-    }
-    #gate.hidden { opacity: 0; visibility: hidden; }
+    /* ── GATE ── */
+    #gate{position:fixed;inset:0;z-index:1000;background:var(--black);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;transition:opacity 0.8s ease,visibility 0.8s ease}
+    #gate.hidden{opacity:0;visibility:hidden}
+    /* scanline effect on gate */
+    #gate::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.03) 50%);background-size:100% 4px;pointer-events:none;animation:fadeIn 1s ease}
 
-    .gate-brand {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.5rem, 6vw, 5rem);
-      font-weight: 300;
-      letter-spacing: 0.25em;
-      color: var(--white);
-      position: relative;
-    }
-    .gate-brand span { color: var(--accent); }
+    .gate-brand{font-family:'Cormorant Garamond',serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:300;letter-spacing:0.25em;color:var(--white);animation:fadeUp 0.8s ease}
+    .gate-brand span{color:var(--accent)}
+    .gate-sub{font-size:10px;letter-spacing:0.3em;color:var(--muted);text-transform:uppercase;margin-top:-20px;animation:fadeIn 1s ease 0.3s both}
+    .gate-box{border:1px solid var(--border);padding:40px;width:min(380px,90vw);display:flex;flex-direction:column;gap:16px;position:relative;animation:fadeUp 0.8s ease 0.4s both;animation:fadeUp 0.8s ease 0.4s both,borderGlow 3s ease 1.5s infinite}
+    .gate-box::before{content:'';position:absolute;top:-1px;left:10%;width:80%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+    .gate-label{font-size:10px;letter-spacing:0.25em;color:var(--muted);text-transform:uppercase}
+    .gate-input{background:var(--panel);border:1px solid var(--border);color:var(--white);font-family:'Space Mono',monospace;font-size:14px;padding:12px 16px;outline:none;width:100%;transition:border-color 0.3s,box-shadow 0.3s}
+    .gate-input:focus{border-color:var(--accent);box-shadow:0 0 15px var(--glow)}
+    .gate-input.error{border-color:#c0392b;animation:shake 0.3s ease}
+    .btn-enter{background:var(--green);border:1px solid var(--accent);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;padding:14px;cursor:pointer;transition:background 0.3s,box-shadow 0.3s,transform 0.2s;width:100%}
+    .btn-enter:hover{background:var(--green2);box-shadow:0 0 25px var(--glow);transform:translateY(-1px)}
+    .btn-enter:active{transform:translateY(0)}
+    .gate-hint{font-size:10px;color:var(--muted);text-align:center}
 
-    .gate-sub {
-      font-size: 10px;
-      letter-spacing: 0.3em;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-top: -20px;
-    }
-
-    .gate-box {
-      border: 1px solid var(--border);
-      padding: 40px;
-      width: min(380px, 90vw);
-      display: flex; flex-direction: column; gap: 16px;
-      position: relative;
-    }
-    .gate-box::before {
-      content: '';
-      position: absolute; top: -1px; left: 10%; width: 80%; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    }
-
-    .gate-label {
-      font-size: 10px; letter-spacing: 0.25em; color: var(--muted); text-transform: uppercase;
-    }
-
-    .gate-input {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      color: var(--white);
-      font-family: 'Space Mono', monospace;
-      font-size: 14px;
-      padding: 12px 16px;
-      outline: none;
-      width: 100%;
-      transition: border-color 0.2s;
-    }
-    .gate-input:focus { border-color: var(--accent); }
-    .gate-input.error { border-color: #c0392b; animation: shake 0.3s ease; }
-
-    @keyframes shake {
-      0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
-    }
-
-    .btn-enter {
-      background: var(--green);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      padding: 14px;
-      cursor: pointer;
-      transition: background 0.2s, box-shadow 0.2s;
-      width: 100%;
-    }
-    .btn-enter:hover { background: var(--green2); box-shadow: 0 0 20px var(--glow); }
-
-    .gate-hint { font-size: 10px; color: var(--muted); text-align: center; }
-
-    /* ============================================================
-       MAIN LAYOUT
-       ============================================================ */
-    #app { position: relative; z-index: 1; }
+    /* ── APP ── */
+    #app{position:relative;z-index:1}
 
     /* ── NAV ── */
-    nav {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(10,10,10,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 40px;
-      height: 64px;
-    }
-
-    .nav-brand {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem; font-weight: 300; letter-spacing: 0.2em;
-      color: var(--white); text-decoration: none;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .nav-brand .dot { color: var(--accent); font-size: 2rem; line-height: 0; }
-
-    .nav-links { display: flex; gap: 4px; }
-
-    .nav-link {
-      color: var(--muted);
-      font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-      text-decoration: none;
-      padding: 8px 16px;
-      border: 1px solid transparent;
-      transition: color 0.2s, border-color 0.2s;
-      cursor: pointer;
-      background: none;
-      font-family: 'Space Mono', monospace;
-    }
-    .nav-link:hover, .nav-link.active { color: var(--accent); border-color: var(--border); }
-    .nav-link.active { color: var(--accent); }
+    nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:64px;animation:fadeIn 0.5s ease}
+    .nav-brand{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;letter-spacing:0.2em;color:var(--white);text-decoration:none;display:flex;align-items:center;gap:8px;transition:color 0.3s}
+    .nav-brand:hover{color:var(--accent)}
+    .nav-brand .dot{color:var(--accent);font-size:2rem;line-height:0}
+    .nav-links{display:flex;gap:4px}
+    .nav-link{color:var(--muted);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;text-decoration:none;padding:8px 16px;border:1px solid transparent;transition:color 0.3s,border-color 0.3s,background 0.3s;cursor:pointer;background:none;font-family:'Space Mono',monospace}
+    .nav-link:hover,.nav-link.active{color:var(--accent);border-color:var(--border)}
 
     /* ── PAGES ── */
-    .page { display: none; }
-    .page.active { display: block; }
+    .page{display:none}
+    .page.active{display:block;animation:fadeIn 0.4s ease}
 
     /* ── HERO ── */
-    .hero {
-      padding: 120px 40px 80px;
-      max-width: 1100px; margin: 0 auto;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
-    }
-
-    .hero-eyebrow {
-      font-size: 10px; letter-spacing: 0.4em; color: var(--accent);
-      text-transform: uppercase; margin-bottom: 20px;
-      display: flex; align-items: center; gap: 12px;
-    }
-    .hero-eyebrow::after {
-      content: ''; flex: 1; height: 1px; background: var(--border); max-width: 60px;
-    }
-
-    .hero-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 5vw, 5.5rem);
-      font-weight: 300; line-height: 1.05;
-      color: var(--white);
-      margin-bottom: 24px;
-    }
-    .hero-title em { font-style: italic; color: var(--accent); }
-
-    .hero-desc {
-      color: var(--muted); line-height: 1.8; font-size: 12px; margin-bottom: 36px;
-    }
-
-    .hero-stats {
-      display: flex; gap: 32px;
-    }
-    .stat-val {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem; color: var(--white); display: block;
-    }
-    .stat-label { font-size: 9px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
-
-    .hero-visual {
-      position: relative; display: flex; justify-content: center;
-    }
-    .hero-card {
-      width: 260px; height: 360px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      position: relative; overflow: hidden;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 40px var(--glow);
-    }
-    .hero-card-inner {
-      width: 100%; height: 100%;
-      background: linear-gradient(160deg, var(--green) 0%, var(--black) 60%);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 12px;
-    }
-    .hero-card-title {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 2.4rem; color: var(--white); letter-spacing: 0.15em;
-    }
-    .hero-card-sub {
-      font-size: 10px; color: var(--accent); letter-spacing: 0.3em; text-transform: uppercase;
-    }
-    .hero-card-vol {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1rem; color: var(--muted); margin-top: 8px;
-    }
-    .hero-card::after {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    }
-    .float-badge {
-      position: absolute; top: -10px; right: -10px;
-      background: var(--green); border: 1px solid var(--accent);
-      color: var(--accent); font-size: 9px; letter-spacing: 0.2em;
-      padding: 6px 10px; text-transform: uppercase;
-    }
+    .hero{padding:120px 40px 80px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+    .hero-eyebrow{font-size:10px;letter-spacing:0.4em;color:var(--accent);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+    .hero-eyebrow::after{content:'';flex:1;height:1px;background:var(--border);max-width:60px}
+    .hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,5vw,5.5rem);font-weight:300;line-height:1.05;color:var(--white);margin-bottom:24px}
+    .hero-title em{font-style:italic;color:var(--accent)}
+    .hero-desc{color:var(--muted);line-height:1.8;font-size:12px;margin-bottom:36px}
+    .hero-stats{display:flex;gap:32px}
+    .stat-val{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--white);display:block}
+    .stat-label{font-size:9px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase}
+    .hero-visual{position:relative;display:flex;justify-content:center}
+    .hero-card{width:260px;height:360px;background:var(--panel);border:1px solid var(--border);position:relative;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 40px var(--glow);animation:float 4s ease-in-out infinite}
+    .hero-card-inner{width:100%;height:100%;background:linear-gradient(160deg,var(--green) 0%,var(--black) 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+    .hero-card-title{font-family:'Noto Serif JP',serif;font-size:2.4rem;color:var(--white);letter-spacing:0.15em}
+    .hero-card-sub{font-size:10px;color:var(--accent);letter-spacing:0.3em;text-transform:uppercase}
+    .hero-card-vol{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--muted);margin-top:8px}
+    .hero-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+    .float-badge{position:absolute;top:-10px;right:-10px;background:var(--green);border:1px solid var(--accent);color:var(--accent);font-size:9px;letter-spacing:0.2em;padding:6px 10px;text-transform:uppercase}
 
     /* ── DIVIDER ── */
-    .divider {
-      max-width: 1100px; margin: 0 auto; padding: 0 40px;
-      display: flex; align-items: center; gap: 20px;
-      color: var(--muted); font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;
-    }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
+    .divider{max-width:1100px;margin:0 auto;padding:0 40px;display:flex;align-items:center;gap:20px;color:var(--muted);font-size:9px;letter-spacing:0.3em;text-transform:uppercase}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
 
-    /* ── BOOKS GRID ── */
-    .books-section {
-      max-width: 1100px; margin: 60px auto; padding: 0 40px;
-    }
+    /* ── BOOKS ── */
+    .books-section{max-width:1100px;margin:60px auto;padding:0 40px}
+    .section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:40px;border-bottom:1px solid var(--border);padding-bottom:20px}
+    .section-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--white)}
+    .section-meta{font-size:10px;color:var(--muted);letter-spacing:0.15em}
+    .books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:24px}
 
-    .section-header {
-      display: flex; align-items: baseline; justify-content: space-between;
-      margin-bottom: 40px;
-      border-bottom: 1px solid var(--border); padding-bottom: 20px;
-    }
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.8rem; font-weight: 300; color: var(--white);
-    }
-    .section-meta { font-size: 10px; color: var(--muted); letter-spacing: 0.15em; }
+    .book-card{background:var(--panel);border:1px solid var(--border);position:relative;overflow:hidden;transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275),box-shadow 0.4s ease,border-color 0.3s ease;cursor:pointer}
+    .book-card:hover{transform:translateY(-8px) scale(1.02);box-shadow:0 24px 48px rgba(0,0,0,0.6),0 0 24px var(--glow);border-color:var(--green2)}
+    .book-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity 0.3s}
+    .book-card:hover::after{opacity:1}
+    .book-cover{aspect-ratio:2/3;background:linear-gradient(160deg,var(--green) 0%,var(--dark) 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
+    .book-cover::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.03) 0%,transparent 50%);transition:opacity 0.3s}
+    .book-card:hover .book-cover::before{opacity:0}
+    .book-vol-num{font-family:'Cormorant Garamond',serif;font-size:3.5rem;color:rgba(255,255,255,0.07);font-weight:600;position:absolute;bottom:10px;right:14px;line-height:1;transition:color 0.3s}
+    .book-card:hover .book-vol-num{color:rgba(255,255,255,0.12)}
+    .book-jp{font-family:'Noto Serif JP',serif;font-size:1.4rem;color:var(--white);letter-spacing:0.1em;z-index:1}
+    .book-title-small{font-size:9px;letter-spacing:0.3em;color:var(--accent);text-transform:uppercase;z-index:1}
+    .book-badge{position:absolute;top:10px;left:0;background:var(--accent);color:var(--black);font-size:8px;font-weight:700;letter-spacing:0.1em;padding:3px 8px;text-transform:uppercase}
+    .book-info{padding:16px}
+    .book-vol-label{font-size:9px;letter-spacing:0.25em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+    .book-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--white);margin-bottom:12px}
+    .btn-get{width:100%;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;padding:10px;cursor:pointer;transition:background 0.3s,color 0.3s,box-shadow 0.3s,transform 0.2s}
+    .btn-get:hover{background:var(--accent);color:var(--black);box-shadow:0 0 20px var(--glow);transform:translateY(-1px)}
+    .btn-get:active{transform:translateY(0)}
 
-    .books-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 24px;
-    }
+    /* ── MODAL ── */
+    .modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity 0.4s,visibility 0.4s}
+    .modal-overlay.open{opacity:1;visibility:visible}
+    .modal{background:var(--dark);border:1px solid var(--border);width:min(440px,90vw);padding:40px;position:relative;transform:translateY(30px) scale(0.97);transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275)}
+    .modal-overlay.open .modal{transform:translateY(0) scale(1)}
+    .modal::before{content:'';position:absolute;top:-1px;left:10%;width:80%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+    .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;transition:color 0.2s,transform 0.2s}
+    .modal-close:hover{color:var(--accent);transform:rotate(90deg)}
+    .modal-eyebrow{font-size:9px;letter-spacing:0.3em;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
+    .modal-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--white);margin-bottom:8px}
+    .modal-vol{font-size:11px;color:var(--muted);margin-bottom:32px}
+    .download-btn{width:100%;background:var(--green);border:1px solid var(--accent);color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;padding:16px;cursor:pointer;margin-bottom:12px;transition:background 0.3s,box-shadow 0.3s,transform 0.2s;display:flex;align-items:center;justify-content:center;gap:10px}
+    .download-btn:hover{background:var(--green2);box-shadow:0 0 25px var(--glow);transform:translateY(-2px)}
+    .download-btn:active{transform:translateY(0)}
+    .download-btn svg{width:14px;height:14px}
+    .modal-note{font-size:10px;color:var(--muted);text-align:center;line-height:1.6}
 
-    .book-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      position: relative; overflow: hidden;
-      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-      cursor: pointer;
-    }
-    .book-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 20px var(--glow);
-      border-color: var(--green2);
-    }
-    .book-card::after {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      opacity: 0; transition: opacity 0.3s;
-    }
-    .book-card:hover::after { opacity: 1; }
-
-    .book-cover {
-      aspect-ratio: 2/3;
-      background: linear-gradient(160deg, var(--green) 0%, var(--dark) 70%);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 8px; position: relative;
-    }
-    .book-vol-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 3.5rem; color: rgba(255,255,255,0.07); font-weight: 600;
-      position: absolute; bottom: 10px; right: 14px; line-height: 1;
-    }
-    .book-jp {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 1.4rem; color: var(--white); letter-spacing: 0.1em;
-      z-index: 1;
-    }
-    .book-title-small {
-      font-size: 9px; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase;
-      z-index: 1;
-    }
-    .book-badge {
-      position: absolute; top: 10px; left: 0;
-      background: var(--accent); color: var(--black);
-      font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
-      padding: 3px 8px; text-transform: uppercase;
-    }
-
-    .book-info { padding: 16px; }
-    .book-vol-label {
-      font-size: 9px; letter-spacing: 0.25em; color: var(--muted); text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .book-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.1rem; color: var(--white); margin-bottom: 12px;
-    }
-
-    .btn-get {
-      width: 100%; background: transparent; border: 1px solid var(--accent);
-      color: var(--accent); font-family: 'Space Mono', monospace;
-      font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-      padding: 10px; cursor: pointer;
-      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-    }
-    .btn-get:hover {
-      background: var(--accent); color: var(--black);
-      box-shadow: 0 0 20px var(--glow);
-    }
-
-    /* ── DOWNLOAD MODAL ── */
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 500;
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; visibility: hidden;
-      transition: opacity 0.3s, visibility 0.3s;
-    }
-    .modal-overlay.open { opacity: 1; visibility: visible; }
-
-    .modal {
-      background: var(--dark);
-      border: 1px solid var(--border);
-      width: min(440px, 90vw);
-      padding: 40px;
-      position: relative;
-      transform: translateY(20px);
-      transition: transform 0.3s ease;
-    }
-    .modal-overlay.open .modal { transform: translateY(0); }
-    .modal::before {
-      content: ''; position: absolute; top: -1px; left: 10%; width: 80%; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    }
-
-    .modal-close {
-      position: absolute; top: 16px; right: 16px;
-      background: none; border: none; color: var(--muted);
-      font-size: 18px; cursor: pointer; transition: color 0.2s;
-    }
-    .modal-close:hover { color: var(--accent); }
-
-    .modal-eyebrow {
-      font-size: 9px; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-    .modal-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.8rem; color: var(--white); margin-bottom: 8px;
-    }
-    .modal-vol { font-size: 11px; color: var(--muted); margin-bottom: 32px; }
-
-    .download-btn {
-      width: 100%; background: var(--green); border: 1px solid var(--accent);
-      color: var(--accent); font-family: 'Space Mono', monospace;
-      font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
-      padding: 16px; cursor: pointer; margin-bottom: 12px;
-      transition: background 0.2s, box-shadow 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-    .download-btn:hover { background: var(--green2); box-shadow: 0 0 20px var(--glow); }
-    .download-btn svg { width: 14px; height: 14px; }
-
-    .modal-note { font-size: 10px; color: var(--muted); text-align: center; line-height: 1.6; }
-
-    /* ── ARTWORK PAGE ── */
-    .artwork-section {
-      max-width: 1100px; margin: 60px auto; padding: 0 40px;
-    }
-    .artwork-header {
-      margin-bottom: 60px;
-    }
-    .artwork-hero-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.5rem, 5vw, 5rem);
-      font-weight: 300; color: var(--white); line-height: 1.1;
-      margin-bottom: 16px;
-    }
-    .artwork-hero-title em { color: var(--accent); font-style: italic; }
-    .artwork-desc { color: var(--muted); font-size: 12px; line-height: 1.8; max-width: 500px; }
-
-    .artwork-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-    }
-    .artwork-item {
-      aspect-ratio: 1;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      position: relative; overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
-    .artwork-item:first-child { grid-column: span 2; aspect-ratio: 2/1; }
-    .artwork-item:hover { z-index: 2; }
-
-    .artwork-inner {
-      width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 12px;
-      transition: transform 0.4s ease;
-    }
-    .artwork-item:hover .artwork-inner { transform: scale(1.04); }
-
-    /* Unique gradient per artwork */
-    .art-1 { background: linear-gradient(135deg, #0a2a12 0%, #1a5c2a 40%, #0a0a0a 100%); }
-    .art-2 { background: linear-gradient(200deg, #0a1a0a 0%, #1f4a1f 60%, #0a0a0a 100%); }
-    .art-3 { background: linear-gradient(45deg, #0a0a0a 0%, #1a5c2a 50%, #0a2a12 100%); }
-    .art-4 { background: linear-gradient(160deg, #122a12 0%, #226b34 30%, #0a0a0a 100%); }
-    .art-5 { background: linear-gradient(240deg, #0a0a0a 0%, #1a5c2a 70%, #0a2a12 100%); }
-
-    .art-label {
-      font-size: 9px; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase;
-    }
-    .art-jp {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 2.2rem; color: rgba(255,255,255,0.15);
-    }
-    .art-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.2rem; color: var(--white);
-    }
-
-    .artwork-overlay {
-      position: absolute; inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity 0.3s;
-    }
-    .artwork-item:hover .artwork-overlay { opacity: 1; }
-    .overlay-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.1rem; color: var(--white); margin-bottom: 4px;
-    }
-    .overlay-meta { font-size: 9px; letter-spacing: 0.2em; color: var(--accent); }
+    /* ── ARTWORK ── */
+    .artwork-section{max-width:1100px;margin:60px auto;padding:0 40px}
+    .artwork-header{margin-bottom:60px}
+    .artwork-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.5rem,5vw,5rem);font-weight:300;color:var(--white);line-height:1.1;margin-bottom:16px}
+    .artwork-hero-title em{color:var(--accent);font-style:italic}
+    .artwork-desc{color:var(--muted);font-size:12px;line-height:1.8;max-width:500px}
+    .artwork-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+    .artwork-item{aspect-ratio:1;background:var(--panel);border:1px solid var(--border);position:relative;overflow:hidden;cursor:pointer}
+    .artwork-item:first-child{grid-column:span 2;aspect-ratio:2/1}
+    .artwork-item:hover{z-index:2}
+    .artwork-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;transition:transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275)}
+    .artwork-item:hover .artwork-inner{transform:scale(1.06)}
+    .art-1{background:linear-gradient(135deg,#0a2a12 0%,#1a5c2a 40%,#0a0a0a 100%)}
+    .art-2{background:linear-gradient(200deg,#0a1a0a 0%,#1f4a1f 60%,#0a0a0a 100%)}
+    .art-3{background:linear-gradient(45deg,#0a0a0a 0%,#1a5c2a 50%,#0a2a12 100%)}
+    .art-4{background:linear-gradient(160deg,#122a12 0%,#226b34 30%,#0a0a0a 100%)}
+    .art-5{background:linear-gradient(240deg,#0a0a0a 0%,#1a5c2a 70%,#0a2a12 100%)}
+    .art-label{font-size:9px;letter-spacing:0.3em;color:var(--accent);text-transform:uppercase}
+    .art-jp{font-family:'Noto Serif JP',serif;font-size:2.2rem;color:rgba(255,255,255,0.15)}
+    .art-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--white)}
+    .artwork-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.72);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.4s ease}
+    .artwork-item:hover .artwork-overlay{opacity:1}
+    .overlay-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--white);margin-bottom:4px;transform:translateY(8px);transition:transform 0.4s ease}
+    .artwork-item:hover .overlay-title{transform:translateY(0)}
+    .overlay-meta{font-size:9px;letter-spacing:0.2em;color:var(--accent);transform:translateY(8px);transition:transform 0.4s ease 0.05s}
+    .artwork-item:hover .overlay-meta{transform:translateY(0)}
 
     /* ── FOOTER ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 40px;
-      max-width: 1100px; margin: 80px auto 0;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .footer-brand {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.2rem; color: var(--muted); letter-spacing: 0.2em;
-    }
-    .footer-copy { font-size: 10px; color: var(--muted); }
+    footer{border-top:1px solid var(--border);padding:40px;max-width:1100px;margin:80px auto 0;display:flex;align-items:center;justify-content:space-between}
+    .footer-brand{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--muted);letter-spacing:0.2em}
+    .footer-copy{font-size:10px;color:var(--muted);line-height:1.7;text-align:right}
 
-    /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--black); }
-    ::-webkit-scrollbar-thumb { background: var(--green); }
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--black)}
+    ::-webkit-scrollbar-thumb{background:var(--green)}
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      nav { padding: 0 20px; }
-      .hero { grid-template-columns: 1fr; gap: 40px; padding: 80px 20px 40px; }
-      .hero-visual { display: none; }
-      .books-section, .artwork-section { padding: 0 20px; }
-      .artwork-grid { grid-template-columns: 1fr 1fr; }
-      .artwork-item:first-child { grid-column: span 2; }
-      footer { flex-direction: column; gap: 12px; text-align: center; padding: 40px 20px; }
+    @media(max-width:768px){
+      nav{padding:0 20px}
+      .hero{grid-template-columns:1fr;gap:40px;padding:80px 20px 40px}
+      .hero-visual{display:none}
+      .books-section,.artwork-section{padding:0 20px}
+      .artwork-grid{grid-template-columns:1fr 1fr}
+      .artwork-item:first-child{grid-column:span 2}
+      footer{flex-direction:column;gap:12px;text-align:center;padding:40px 20px}
+      .footer-copy{text-align:center}
     }
   </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════
-     PASSWORD GATE
-     ════════════════════════════════════ -->
 <div id="gate">
   <div class="gate-brand" id="gate-brand-name">INK<span>B</span>OUND</div>
   <div class="gate-sub">Premium Manga Library</div>
@@ -526,12 +210,7 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════
-     MAIN APP
-     ════════════════════════════════════ -->
 <div id="app">
-
-  <!-- NAV -->
   <nav>
     <a class="nav-brand" href="#" onclick="showPage('home')">
       <span class="dot">·</span>
@@ -543,29 +222,18 @@
     </div>
   </nav>
 
-  <!-- ── HOME PAGE ── -->
   <div class="page active" id="page-home">
-
     <div class="hero">
       <div class="hero-text">
-        <div class="hero-eyebrow">Free Collection</div>
-        <h1 class="hero-title">Read <em>Manga</em><br>Without Limits</h1>
-        <p class="hero-desc">
-          Every volume, every chapter — available instantly.<br>
-          No subscription. No account. Just click and read.
-        </p>
-        <div class="hero-stats">
-          <div>
-            <span class="stat-val" id="stat-volumes">—</span>
-            <span class="stat-label">Volumes</span>
-          </div>
-          <div>
-            <span class="stat-val">Free</span>
-            <span class="stat-label">Always</span>
-          </div>
+        <div class="hero-eyebrow animate-fade-up delay-1">Free Collection</div>
+        <h1 class="hero-title animate-fade-up delay-2">Read <em>Manga</em><br>Without Limits</h1>
+        <p class="hero-desc animate-fade-up delay-3">Every volume, every chapter — available instantly.<br>No subscription. No account. Just click and read.</p>
+        <div class="hero-stats animate-fade-up delay-4">
+          <div><span class="stat-val" id="stat-volumes">—</span><span class="stat-label">Volumes</span></div>
+          <div><span class="stat-val">Free</span><span class="stat-label">Always</span></div>
         </div>
       </div>
-      <div class="hero-visual">
+      <div class="hero-visual animate-slide-right delay-2">
         <div class="hero-card">
           <div class="hero-card-inner">
             <span class="hero-card-title" id="hero-jp-title">墨</span>
@@ -577,43 +245,38 @@
       </div>
     </div>
 
-    <div class="divider">Complete Volumes</div>
+    <div class="divider reveal">Complete Volumes</div>
 
     <section class="books-section">
-      <div class="section-header">
+      <div class="section-header reveal">
         <h2 class="section-title" id="manga-series-title">Manga Series</h2>
         <span class="section-meta" id="manga-series-meta">— vol. 1 onwards</span>
       </div>
-      <div class="books-grid" id="books-grid">
-        <!-- Filled by JS -->
-      </div>
+      <div class="books-grid" id="books-grid"></div>
     </section>
+  </div>
 
-  </div><!-- /page-home -->
-
-  <!-- ── ARTWORK PAGE ── -->
   <div class="page" id="page-art">
     <section class="artwork-section">
       <div class="artwork-header">
-        <h1 class="artwork-hero-title">Original<br><em>Artwork</em></h1>
-        <p class="artwork-desc">
-          A curated gallery of key illustrations, cover art, and original pieces from the series.
-        </p>
+        <h1 class="artwork-hero-title animate-fade-up delay-1">Original<br><em>Artwork</em></h1>
+        <p class="artwork-desc animate-fade-up delay-2">A curated gallery of key illustrations, cover art, and original pieces from the series.</p>
       </div>
-      <div class="artwork-grid" id="artwork-grid">
-        <!-- Filled by JS -->
-      </div>
+      <div class="artwork-grid" id="artwork-grid"></div>
     </section>
-  </div><!-- /page-art -->
+  </div>
 
-  <footer>
+  <footer class="reveal">
     <div class="footer-brand" id="footer-brand">INKBOUND</div>
-    <div class="footer-copy">© 2024 · Free to read · No rights reserved</div>
+    <div class="footer-copy">
+      © 2024–2030 INKBOUND™ · All Rights Reserved<br>
+      INKBOUND and all associated characters, artwork, and content are<br>
+      the exclusive intellectual property of INKBOUND Publishing.<br>
+      Unauthorized reproduction or distribution is strictly prohibited.
+    </div>
   </footer>
+</div>
 
-</div><!-- /app -->
-
-<!-- DOWNLOAD MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
@@ -626,109 +289,77 @@
       </svg>
       Download PDF — Free
     </button>
-    <p class="modal-note">
-      No account required · Instant download<br>
-      Share freely with anyone
-    </p>
+    <p class="modal-note">No account required · Instant download<br>Share freely with anyone</p>
   </div>
 </div>
 
 <script>
-/* ================================================================
-   ✦  CONFIGURATION  ✦
-   Edit everything below to customise without touching layout code
-   ================================================================ */
-
 const CONFIG = {
-  /* ── Brand ─────────────────────────── */
-  brandName:   "INKBOUND",      // ← Top-left logo + gate title
-
-  /* ── Password Gate ──────────────────── */
-  passwordEnabled: true,         // ← false = skip gate entirely
-  password:        "manga2024",  // ← Change this
-
-  /* ── Manga Series Info ──────────────── */
-  seriesName:    "Shadow Realm",   // ← Manga title (English)
-  seriesJP:      "影の領域",        // ← Japanese title (decorative)
-  seriesTagline: "vol. 1 onwards", // ← Subtitle under series name
-
-  /* ── Volumes ────────────────────────── */
-  // Add or remove objects in this array to add/remove volumes
-  // fileUrl: put the real PDF link here (Google Drive / direct link)
+  brandName: "INKBOUND",
+  passwordEnabled: true,
+  password: "manga2024",
+  seriesName: "Shadow Realm",
+  seriesJP: "影の領域",
+  seriesTagline: "vol. 1 onwards",
   volumes: [
-    { vol: 1, subtitle: "The Awakening",    fileUrl: "#" },
-    { vol: 2, subtitle: "Fractured Light",  fileUrl: "#" },
-    { vol: 3, subtitle: "Storm Protocol",   fileUrl: "#" },
-    { vol: 4, subtitle: "Hollow Sky",       fileUrl: "#" },
-    { vol: 5, subtitle: "Void March",       fileUrl: "#" },
-    { vol: 6, subtitle: "Red Signal",       fileUrl: "#" },
+    {vol:1,subtitle:"vol1",fileUrl:"#"},
+    {vol:2,subtitle:"vol2",fileUrl:"#"},
+    {vol:3,subtitle:"vol3",fileUrl:"#"},
+    {vol:4,subtitle:"vol4",fileUrl:"#"},
+    {vol:5,subtitle:"vol5",fileUrl:"#"},
+    {vol:6,subtitle:"vol6",fileUrl:"#"},
   ],
-
-  /* ── Artwork Gallery ────────────────── */
-  // label, title, jpText shown on artwork cards
   artworks: [
-    { label: "Cover Art",    title: "Into the Dark",   jp: "闇" },
-    { label: "Character",    title: "The Wanderer",    jp: "放浪" },
-    { label: "Landscape",    title: "Neon Forest",     jp: "森" },
-    { label: "Chapter Art",  title: "First Strike",    jp: "打撃" },
-    { label: "Poster",       title: "Eternal Fade",    jp: "永遠" },
+    {label:"Cover Art",title:"Into the Dark",jp:"闇"},
+    {label:"Character",title:"The Wanderer",jp:"放浪"},
+    {label:"Landscape",title:"Neon Forest",jp:"森"},
+    {label:"Chapter Art",title:"First Strike",jp:"打撃"},
+    {label:"Poster",title:"Eternal Fade",jp:"永遠"},
   ],
 };
-/* ── End of config ──────────────────────────────────── */
 
+document.querySelectorAll('#nav-brand-name,#footer-brand').forEach(el=>el.textContent=CONFIG.brandName);
+document.querySelector('#gate-brand-name').innerHTML=CONFIG.brandName.slice(0,-4)+'<span>'+CONFIG.brandName.slice(-4,-3)+'</span>'+CONFIG.brandName.slice(-3);
+document.getElementById('manga-series-title').textContent=CONFIG.seriesName;
+document.getElementById('manga-series-meta').textContent='— '+CONFIG.seriesTagline;
+document.getElementById('hero-jp-title').textContent=CONFIG.seriesJP.charAt(0);
+document.getElementById('hero-manga-name').textContent=CONFIG.seriesName.toUpperCase();
+document.getElementById('stat-volumes').textContent=CONFIG.volumes.length;
 
-/* ── Inject brand name everywhere ── */
-document.querySelectorAll('#gate-brand-name, #nav-brand-name, #footer-brand').forEach(el => {
-  el.textContent = CONFIG.brandName;
-});
-document.querySelector('#gate-brand-name').innerHTML =
-  CONFIG.brandName.slice(0,-4) + '<span>' + CONFIG.brandName.slice(-4,-3) + '</span>' + CONFIG.brandName.slice(-3);
+if(!CONFIG.passwordEnabled) document.getElementById('gate').classList.add('hidden');
 
-document.getElementById('manga-series-title').textContent = CONFIG.seriesName;
-document.getElementById('manga-series-meta').textContent = '— ' + CONFIG.seriesTagline;
-document.getElementById('hero-jp-title').textContent = CONFIG.seriesJP.charAt(0);
-document.getElementById('hero-manga-name').textContent = CONFIG.seriesName.toUpperCase();
-document.getElementById('stat-volumes').textContent = CONFIG.volumes.length;
-
-/* ── Password gate ── */
-if (!CONFIG.passwordEnabled) {
-  document.getElementById('gate').classList.add('hidden');
-}
-
-function checkPassword() {
-  if (!CONFIG.passwordEnabled) return;
-  const input = document.getElementById('pw-input');
-  if (input.value === CONFIG.password) {
+function checkPassword(){
+  if(!CONFIG.passwordEnabled)return;
+  const input=document.getElementById('pw-input');
+  if(input.value===CONFIG.password){
     document.getElementById('gate').classList.add('hidden');
   } else {
     input.classList.add('error');
-    setTimeout(() => input.classList.remove('error'), 400);
-    input.value = '';
-    input.placeholder = 'Wrong key — try again';
-    setTimeout(() => input.placeholder = '············', 2000);
+    setTimeout(()=>input.classList.remove('error'),400);
+    input.value='';
+    input.placeholder='Wrong key — try again';
+    setTimeout(()=>input.placeholder='············',2000);
   }
 }
-document.getElementById('pw-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') checkPassword();
-});
+document.getElementById('pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkPassword()});
 
-/* ── Render books ── */
-const gradients = [
-  'linear-gradient(160deg, #1a5c2a 0%, #0a0a0a 70%)',
-  'linear-gradient(200deg, #226b34 0%, #0a1a0a 80%)',
-  'linear-gradient(120deg, #0a2a12 0%, #1a5c2a 60%, #0a0a0a 100%)',
-  'linear-gradient(170deg, #1f4a1f 0%, #0a0a0a 70%)',
-  'linear-gradient(140deg, #0a0a0a 0%, #226b34 60%, #0a1a0a 100%)',
-  'linear-gradient(190deg, #1a5c2a 0%, #0a2a12 100%)',
+const gradients=[
+  'linear-gradient(160deg,#1a5c2a 0%,#0a0a0a 70%)',
+  'linear-gradient(200deg,#226b34 0%,#0a1a0a 80%)',
+  'linear-gradient(120deg,#0a2a12 0%,#1a5c2a 60%,#0a0a0a 100%)',
+  'linear-gradient(170deg,#1f4a1f 0%,#0a0a0a 70%)',
+  'linear-gradient(140deg,#0a0a0a 0%,#226b34 60%,#0a1a0a 100%)',
+  'linear-gradient(190deg,#1a5c2a 0%,#0a2a12 100%)',
 ];
 
-const grid = document.getElementById('books-grid');
-CONFIG.volumes.forEach((v, i) => {
-  const card = document.createElement('div');
-  card.className = 'book-card';
-  card.innerHTML = `
-    <div class="book-cover" style="background:${gradients[i % gradients.length]}">
-      ${i === 0 ? '<div class="book-badge">New</div>' : ''}
+const grid=document.getElementById('books-grid');
+CONFIG.volumes.forEach((v,i)=>{
+  const card=document.createElement('div');
+  card.className='book-card reveal';
+  card.style.transitionDelay=(i*0.07)+'s';
+  card.innerHTML=`
+    <div class="book-cover" style="background:${gradients[i%gradients.length]}">
+      ${i===0?'<div class="book-badge">New</div>':''}
       <span class="book-jp">${CONFIG.seriesJP.charAt(0)}</span>
       <span class="book-title-small">${CONFIG.seriesName.toUpperCase()}</span>
       <span class="book-vol-num">0${v.vol}</span>
@@ -736,22 +367,19 @@ CONFIG.volumes.forEach((v, i) => {
     <div class="book-info">
       <div class="book-vol-label">Volume ${v.vol}</div>
       <div class="book-name">${v.subtitle}</div>
-      <button class="btn-get" onclick="openModal(${v.vol},'${v.subtitle}','${v.fileUrl}')">
-        Get for Free →
-      </button>
-    </div>
-  `;
+      <button class="btn-get" onclick="openModal(${v.vol},'${v.subtitle}','${v.fileUrl}')">Get for Free →</button>
+    </div>`;
   grid.appendChild(card);
 });
 
-/* ── Render artwork ── */
-const artClasses = ['art-1','art-2','art-3','art-4','art-5'];
-const artGrid = document.getElementById('artwork-grid');
-CONFIG.artworks.forEach((a, i) => {
-  const item = document.createElement('div');
-  item.className = 'artwork-item';
-  item.innerHTML = `
-    <div class="artwork-inner ${artClasses[i % artClasses.length]}">
+const artClasses=['art-1','art-2','art-3','art-4','art-5'];
+const artGrid=document.getElementById('artwork-grid');
+CONFIG.artworks.forEach((a,i)=>{
+  const item=document.createElement('div');
+  item.className='artwork-item reveal';
+  item.style.transitionDelay=(i*0.1)+'s';
+  item.innerHTML=`
+    <div class="artwork-inner ${artClasses[i%artClasses.length]}">
       <span class="art-label">${a.label}</span>
       <span class="art-jp">${a.jp}</span>
       <span class="art-title">${a.title}</span>
@@ -759,23 +387,27 @@ CONFIG.artworks.forEach((a, i) => {
     <div class="artwork-overlay">
       <div class="overlay-title">${a.title}</div>
       <div class="overlay-meta">${a.label}</div>
-    </div>
-  `;
+    </div>`;
   artGrid.appendChild(item);
 });
 
-/* ── Modal ── */
-let currentFile = '#';
-function openModal(vol, subtitle, fileUrl) {
-  currentFile = fileUrl;
-  document.getElementById('modal-title').textContent = CONFIG.seriesName;
-  document.getElementById('modal-vol').textContent = `Volume ${vol} — ${subtitle}`;
-  document.getElementById('modal-dl-btn').onclick = () => {
-    if (currentFile && currentFile !== '#') {
-      const a = document.createElement('a');
-      a.href = currentFile;
-      a.download = `${CONFIG.seriesName.replace(/\s+/g,'-')}-Vol${vol}.pdf`;
-      a.target = '_blank';
+/* scroll reveal */
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:0.1});
+document.querySelectorAll('.reveal,.reveal-left').forEach(el=>observer.observe(el));
+
+let currentFile='#';
+function openModal(vol,subtitle,fileUrl){
+  currentFile=fileUrl;
+  document.getElementById('modal-title').textContent=CONFIG.seriesName;
+  document.getElementById('modal-vol').textContent=`Volume ${vol} — ${subtitle}`;
+  document.getElementById('modal-dl-btn').onclick=()=>{
+    if(currentFile&&currentFile!=='#'){
+      const a=document.createElement('a');
+      a.href=currentFile;
+      a.download=`${CONFIG.seriesName.replace(/\s+/g,'-')}-Vol${vol}.pdf`;
+      a.target='_blank';
       a.click();
     } else {
       alert('PDF link not yet configured. Add the fileUrl in CONFIG.volumes.');
@@ -783,20 +415,18 @@ function openModal(vol, subtitle, fileUrl) {
   };
   document.getElementById('modal').classList.add('open');
 }
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-}
-document.getElementById('modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal')) closeModal();
-});
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal()});
 
-/* ── Page navigation ── */
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('nav-' + name).classList.add('active');
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
   window.scrollTo(0,0);
+  setTimeout(()=>{
+    document.querySelectorAll('.reveal,.reveal-left').forEach(el=>observer.observe(el));
+  },50);
 }
 </script>
 </body>
